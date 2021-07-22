@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:nus_entreprenuership_app/screens/MentorListScreen.dart';
+import 'package:nus_entreprenuership_app/screens/homeScreen.dart';
 import 'package:nus_entreprenuership_app/screens/login_screen.dart';
+import 'package:nus_entreprenuership_app/screens/news_page.dart';
+import 'package:nus_entreprenuership_app/screens/profile.dart';
+import 'package:nus_entreprenuership_app/screens/youtube_channel.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:nus_entreprenuership_app/shared_widgets/nes_logo.dart';
 
 Widget nesSideBar(context) => Drawer(
       child: ListView(
@@ -8,10 +14,18 @@ Widget nesSideBar(context) => Drawer(
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            child: Text('User Details'),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
+              child: Padding(
+            padding: const EdgeInsets.only(left: 30.0, right: 30),
+            child: nesLogo(),
+          )),
+          ListTile(
+            title: Text('Home'),
+            onTap: () {
+              // Update the state of the app
+              // ...
+              // Then close the drawer
+              Navigator.pushNamed(context, MyHomePage.id);
+            },
           ),
           ListTile(
             title: Text('Settings'),
@@ -19,7 +33,7 @@ Widget nesSideBar(context) => Drawer(
               // Update the state of the app
               // ...
               // Then close the drawer
-              Navigator.pop(context);
+              Navigator.pushNamed(context, profilePage.id);
             },
           ),
           ListTile(
@@ -28,21 +42,32 @@ Widget nesSideBar(context) => Drawer(
               // Update the state of the app
               // ...
               // Then close the drawer
-              Navigator.pop(context);
+              Navigator.pushNamed(context, newsfeed.id);
             },
           ),
           ListTile(
-            title: Text('Mentor List'),
+            title: Text('Member List'),
             onTap: () {
               // Update the state of the app
               // ...
               // Then close the drawer
-              Navigator.pushNamed(context, MentorListScreen.id);
+              Navigator.pushNamed(context, MemberList.id);
             },
           ),
           ListTile(
+            title: Text('Educational Videos'),
+            onTap: () {
+              // Update the state of the app
+              // ...
+              // Then close the drawer
+              Navigator.pushNamed(context, YoutubeScreen.id);
+            },
+          ),
+          Expanded(child: Container()),
+          ListTile(
             title: Text('Log out'),
             onTap: () {
+              FirebaseAuth.instance.signOut();
               // Update the state of the app
               // ...
               // Then close the drawer

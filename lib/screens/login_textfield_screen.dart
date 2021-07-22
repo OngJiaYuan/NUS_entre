@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+
 import 'package:nus_entreprenuership_app/screens/homeScreen.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nus_entreprenuership_app/screens/registrationScreen.dart';
-import 'package:nus_entreprenuership_app/services/password.dart';
+import 'package:nus_entreprenuership_app/services/error_message.dart';
+import 'package:nus_entreprenuership_app/shared_widgets/constants.dart';
+import 'package:nus_entreprenuership_app/shared_widgets/nes_logo.dart';
+import 'package:nus_entreprenuership_app/shared_widgets/roundedButton.dart';
 
 class LoginTextfieldScreen extends StatefulWidget {
   static String id = 'login_text';
@@ -10,75 +17,125 @@ class LoginTextfieldScreen extends StatefulWidget {
 }
 
 class _LoginTextfieldScreenState extends State<LoginTextfieldScreen> {
-  late String _password;
-  final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
+  final _auth = FirebaseAuth.instance;
+  bool showSpinner = false;
+  late String email;
+  late String password;
+  var errorMessage;
 
   @override
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: Container(
-        height: height,
-        width: width,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.1, 0.25],
-            colors: [Colors.blue, Colors.white],
-          ),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: SingleChildScrollView(
+      ),
+      backgroundColor: Colors.white,
+      body: ModalProgressHUD(
+        inAsyncCall: showSpinner,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(top: 190),
-                child: _nesLogo(width: width, height: height),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: 64),
-                child: _textField(
-                    width: width,
-                    labelText: 'Username',
-                    varname: 'username',
-                    obscure: false),
-              ),
-              Container(
-                width: 320,
-                child: Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: PasswordField(
-                    fieldKey: _passwordFieldKey,
-                    helperText: 'No more than 8 characters.',
-                    labelText: 'Password *',
-                    onFieldSubmitted: (String value) {
-                      setState(() {
-                        this._password = value;
-                      });
-                    },
-                    validator: (String? value) {},
-                    onSaved: (String? newValue) {},
-                    hintText: '  ',
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Flexible(
+                child: Hero(
+                  tag: 'logo',
+                  child: Padding(
+                    padding: const EdgeInsets.all(80.0),
+                    child: nesLogo(),
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: _backAndLoginRow(
-                  width: width,
-                  backTap: () {
-                    Navigator.pop(context);
-                  },
-                  loginPressed: () {
-                    print('press');
-                    Navigator.pushNamed(context, MyHomePage.id);
-                  },
-                  registerPressed: () {
-                    Navigator.pushNamed(context, registrationScreen.id);
-                  },
-                ),
+              SizedBox(
+                height: 48.0,
+              ),
+              TextField(
+                keyboardType: TextInputType.emailAddress,
+                textAlign: TextAlign.center,
+                onChanged: (value) {
+                  email = value;
+                },
+                decoration:
+                    kTextFieldDecoration.copyWith(hintText: 'Enter your email'),
+              ),
+              SizedBox(
+                height: 8.0,
+              ),
+              TextField(
+                obscureText: true,
+                textAlign: TextAlign.center,
+                onChanged: (value) {
+                  password = value;
+                },
+                decoration: kTextFieldDecoration.copyWith(
+                    hintText: 'Enter your password'),
+              ),
+              SizedBox(
+                height: 24.0,
+              ),
+              RoundedButton(
+                title: 'Log In',
+                colour: Colors.lightBlueAccent,
+                onPressed: () async {
+                  setState(() {
+                    showSpinner = true;
+                  });
+                  try {
+                    final user = await _auth.signInWithEmailAndPassword(
+                        email: email, password: password);
+                    if (user != null) {
+                      Navigator.pushNamed(context, MyHomePage.id);
+                    }
+
+                    setState(() {
+                      showSpinner = false;
+                    });
+                  } catch (error) {
+                    print(error);
+                    setState(() {
+                      showSpinner = false;
+                      errorMessage =
+                          AuthExceptionHandler.generateExceptionMessage(error);
+                      ;
+                    });
+                    showDialog<void>(
+                      context: context,
+                      barrierDismissible: false, // user must tap button!
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text(errorMessage.toString()),
+                          content: SingleChildScrollView(
+                            child: ListBody(
+                              children: <Widget>[
+                                Text(error.toString()),
+                                Text('Would you like to try again?'),
+                              ],
+                            ),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('Try again'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              child: const Text('Register?'),
+                              onPressed: () {
+                                Navigator.of(context)
+                                    .pushNamed(RegistrationScreen.id);
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -87,98 +144,3 @@ class _LoginTextfieldScreenState extends State<LoginTextfieldScreen> {
     );
   }
 }
-
-Widget _nesLogo({required double width, required double height}) => Container(
-      width: width * 0.65,
-      height: height * 0.40,
-      child: Image.asset(
-        'asset/nes_logo.png',
-        fit: BoxFit.fill,
-      ),
-    );
-
-Widget _textField(
-        {required double width,
-        required String labelText,
-        required String varname,
-        required bool obscure}) =>
-    Container(
-      width: width * 0.75,
-      height: 45,
-      child: TextField(
-        textAlign: TextAlign.center,
-        onChanged: (value) {
-          print(value);
-          varname = value;
-        },
-        maxLines: 1,
-        decoration: InputDecoration(
-          labelText: labelText,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.black),
-          ),
-        ),
-      ),
-    );
-
-Widget _loginButton({required double width, required onPressed}) => Container(
-      width: width * 0.25,
-      height: 30,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: Text(
-          'LOGIN',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
-
-Widget _backGesture({required onTap}) => GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.translucent,
-      child: Text(
-        'back',
-        style: TextStyle(color: Colors.blue),
-      ),
-    );
-
-Widget _backAndLoginRow(
-        {required double width,
-        required Function backTap,
-        required Function loginPressed,
-        required Function registerPressed}) =>
-    Container(
-      width: width * 0.75,
-      child: Column(
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _backGesture(onTap: backTap),
-              _loginButton(width: width, onPressed: loginPressed),
-            ],
-          ),
-          SizedBox(
-            height: 20,
-          ),
-          Center(
-            child: _registerButton(onPressed: registerPressed),
-          )
-        ],
-      ),
-    );
-
-Widget _registerButton({onPressed}) => Container(
-      height: 20,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: Text(
-          'do not have any account? Register now.',
-          style: TextStyle(
-            decoration: TextDecoration.underline,
-            color: Colors.black,
-          ),
-        ),
-      ),
-    );

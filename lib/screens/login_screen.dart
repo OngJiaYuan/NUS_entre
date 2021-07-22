@@ -1,94 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:nus_entreprenuership_app/screens/login_textfield_screen.dart';
+import 'package:nus_entreprenuership_app/screens/registrationScreen.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:nus_entreprenuership_app/shared_widgets/nes_logo.dart';
+import 'package:nus_entreprenuership_app/shared_widgets/roundedButton.dart';
 
 class LoginScreen extends StatefulWidget {
-  static String id = 'login_screen';
+  static const String id = 'login_screen';
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController controller;
+  late Animation animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    controller =
+        AnimationController(duration: Duration(seconds: 1), vsync: this);
+    animation = ColorTween(begin: Colors.blueGrey, end: Colors.white)
+        .animate(controller);
+    controller.forward();
+    controller.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: Container(
-        height: height,
-        width: width,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.1, 0.25],
-            colors: [Colors.blue, Colors.white],
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.only(top: 190),
-                child: _nesLogo(width: width, height: height),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: 128),
-                child: _loginButton(
-                  width: width,
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => LoginTextfieldScreen()));
-                  },
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: _registerButton(width: width, onPressed: null),
-              ),
-            ],
-          ),
+      backgroundColor: animation.value,
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(80.0),
+              child: Hero(tag: 'logo', child: nesLogo()),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Center(
+                    child: TypewriterAnimatedTextKit(
+                      text: ['NUS Entrepreneurship Society'],
+                      textStyle: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 25.0,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+            SizedBox(
+              height: 48.0,
+            ),
+            RoundedButton(
+              title: 'Log In',
+              colour: Colors.lightBlueAccent,
+              onPressed: () {
+                Navigator.pushNamed(context, LoginTextfieldScreen.id);
+              },
+            ),
+            RoundedButton(
+              title: 'Register',
+              colour: Colors.blueAccent,
+              onPressed: () {
+                Navigator.pushNamed(context, RegistrationScreen.id);
+              },
+            ),
+          ],
         ),
       ),
     );
+    ;
   }
 }
-
-Widget _nesLogo({required double width, required double height}) => Container(
-      width: width * 0.65,
-      height: height * 0.40,
-      child: Image.asset(
-        'asset/nes_logo.png',
-        fit: BoxFit.fill,
-      ),
-    );
-
-Widget _loginButton({required double width, required onPressed}) => Container(
-      width: width * 0.65,
-      height: 40,
-      child: ElevatedButton(
-        onPressed: onPressed,
-
-
-        child: Text(
-          'LOGIN',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
-
-Widget _registerButton({required double width, required onPressed}) => Container(
-      width: width * 0.65,
-      height: 40,
-      child: ElevatedButton(
-
-        onPressed: onPressed,
-
-        child: Text(
-          'REGISTER',
-          style: TextStyle(color: Colors.black),
-        ),
-
-      ),
-    );

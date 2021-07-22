@@ -1,33 +1,48 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:nus_entreprenuership_app/screens/homeScreen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:nus_entreprenuership_app/screens/profile.dart';
 import 'package:nus_entreprenuership_app/screens/profile_image_upload.dart';
 import 'package:nus_entreprenuership_app/services/error_message.dart';
 import 'package:nus_entreprenuership_app/shared_widgets/constants.dart';
 import 'package:nus_entreprenuership_app/shared_widgets/nes_logo.dart';
 import 'package:nus_entreprenuership_app/shared_widgets/roundedButton.dart';
-import 'package:firebase_core/firebase_core.dart';
 
-class RegistrationScreen extends StatefulWidget {
-  static String id = 'registration';
+final _firestore = FirebaseFirestore.instance;
+User? loggedInUser;
+
+class ProfileUpdate extends StatefulWidget {
+  static String id = 'update_profile';
   @override
-  _RegistrationScreenState createState() => _RegistrationScreenState();
+  _ProfileUpdatState createState() => _ProfileUpdatState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
-  final _firestore = FirebaseFirestore.instance;
+class _ProfileUpdatState extends State<ProfileUpdate> {
   final _auth = FirebaseAuth.instance;
   bool showSpinner = false;
   late String name;
-  late String email;
-  late String password;
-  late String password2;
   late String telegram;
   late String linkedin;
   late String errorMessage;
   late bool mentor = true;
+  @override
+  void initState() {
+    super.initState();
+
+    getCurrentUser();
+  }
+
+  void getCurrentUser() async {
+    try {
+      final user = await _auth.currentUser!;
+      if (user != null) {
+        loggedInUser = user;
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,56 +83,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 SizedBox(
                   height: 8.0,
                 ),
-                TextFormField(
-                  keyboardType: TextInputType.emailAddress,
-                  textAlign: TextAlign.center,
-                  onChanged: (value) {
-                    email = value;
-                  },
-                  decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'Enter your email'),
-                  validator: (value) {
-                    if (value == null || !value.contains('@'))
-                      return 'Please enter a valid Email address';
-                    return null;
-                  },
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                TextFormField(
-                  obscureText: true,
-                  textAlign: TextAlign.center,
-                  onChanged: (value) {
-                    password = value;
-                  },
-                  decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'Enter your password'),
-                  validator: (value) {
-                    if (value == null || value.length <= 6)
-                      return 'Please enter a 7 character password';
-                    return null;
-                  },
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                TextFormField(
-                  obscureText: true,
-                  textAlign: TextAlign.center,
-                  onChanged: (value) {
-                    password2 = value;
-                  },
-                  decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'Re-Enter your password'),
-                  validator: (value) {
-                    if (value == null || value.length <= 6)
-                      return 'Please enter a 7 character password';
-                    else if (password2 != password)
-                      return 'Password does not match';
-                    return null;
-                  },
-                ),
                 SizedBox(
                   height: 8.0,
                 ),
@@ -146,52 +111,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 Row(
                   children: [
                     Text('Are you a mentor'),
-                    SizedBox(
-                      width: 150,
-                    ),
-                    Switch(
-                        activeTrackColor: Colors.lightBlue,
-                        activeColor: Colors.blueAccent,
-                        value: mentor,
-                        onChanged: (value) {
-                          setState(() {
-                            mentor = value;
-                          });
-                        })
+                    Expanded(child: Container()),
                   ],
                 ),
                 SizedBox(
                   height: 24.0,
                 ),
                 RoundedButton(
-                    title: 'Register',
+                    title: 'Update',
                     colour: Colors.blueAccent,
                     onPressed: () async {
                       setState(() {
                         showSpinner = true;
                       });
                       try {
-                        final newUser =
-                            await _auth.createUserWithEmailAndPassword(
-                                email: email, password: password);
-                        if (newUser != null) {
+                        if (loggedInUser != null) {
+                          print(_auth.currentUser!.uid);
+                          print(linkedin);
+                          print(name);
+                          print(telegram);
                           _firestore
                               .collection('user')
-                              .doc(newUser.user!.uid)
-                              .set({
-                            'email': email,
+                              .doc(_auth.currentUser!.uid)
+                              .update({
                             'Linkedin': linkedin,
                             'Name': name,
-                            'Telegram': telegram,
-                            'id': newUser.user!.uid,
-                            'mentor': mentor,
+                            'Telegram': telegram
                           });
-                          Navigator.pushNamed(context, MyHomePage.id);
                         }
 
                         setState(() {
                           showSpinner = false;
                         });
+                        Navigator.pushNamed(context, profilePage.id);
                       } catch (error) {
                         print(error);
                         setState(() {
